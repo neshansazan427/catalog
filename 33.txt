@@ -1,0 +1,98 @@
+import fitz  # PyMuPDF
+from bs4 import BeautifulSoup
+
+# ???? PDF ?? ??? ????
+pdf_document = "cataloge.pdf"
+doc = fitz.open(pdf_document)
+
+# ??????? ??? ?? PDF
+text = ""
+for page_num in range(len(doc)):
+    page = doc.load_page(page_num)
+    text += page.get_text()
+
+# ????? ??? ?? ??????? ???? ????
+sections = text.split('Necklace')[1:]
+
+products = []
+for section in sections:
+    lines = section.strip().split('\n')
+    title = lines[0].strip()
+    items = []
+    for i in range(1, len(lines), 3):
+        code = lines[i].strip().split(':')[1].strip()
+        silver = lines[i+1].strip().split(':')[1].strip()
+        gold = lines[i+2].strip().split(':')[1].strip()
+        items.append({'code': code, 'silver': silver, 'gold': gold})
+    products.append({'title': title, 'items': items})
+
+# ???? HTML ???? ???????
+html_template = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalog</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }}
+        .product {{
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }}
+        .product h2 {{
+            margin: 0;
+            padding: 0;
+            font-size: 1.2em;
+            color: #333;
+        }}
+        .product p {{
+            margin: 5px 0;
+        }}
+        .contact-info {{
+            margin-top: 20px;
+            padding: 10px;
+            border-top: 1px solid #ccc;
+        }}
+    </style>
+</head>
+<body>
+    <h1>June 2024 Collection</h1>
+    <h2>316L Stainless Steel Jewelry</h2>
+    <p>Guaranteed not to fade, not to darken, not to lose color. 24k gold plated.</p>
+    {products_html}
+    <div class="contact-info">
+        <h2>Contact Information</h2>
+        <p>Phone: +90 537 3067520</p>
+        <p>Mobile, WhatsApp, Telegram: +98 912 8877587</p>
+        <p>Office: Ivedik Industrial Zone, 1539. St. No: 9, Yenimahalle, Ankara, TURKEY</p>
+        <p>Factory: Baskent Industrial Zone, 18. St. No: 35, Sincan, Ankara, TURKEY</p>
+        <p>Website: <a href="http://www.adorisco.tr">www.adorisco.tr</a></p>
+    </div>
+</body>
+</html>
+'''
+
+# ????? ??? ???????
+products_html = ""
+for product in products:
+    product_html = f'<div class="product"><h2>Necklace {product["title"]}</h2>'
+    for item in product['items']:
+        product_html += f'<p>Code: {item["code"]}</p>'
+        product_html += f'<p>Silver: {item["silver"]}</p>'
+        product_html += f'<p>Gold: {item["gold"]}</p>'
+    product_html += '</div>'
+    products_html += product_html
+
+# ????? ???? HTML
+html_content = html_template.format(products_html=products_html)
+
+# ????? ?? ????? ???? HTML
+with open("catalog.html", "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+print("Catalog has been converted to HTML.")
